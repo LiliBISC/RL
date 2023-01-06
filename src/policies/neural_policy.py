@@ -6,24 +6,31 @@ from src.env.environment import Environment
 
 class NeuralNetPolicy(AbstractPolicy):
     """
-    Abstract class of any policy
+    Neural network modelisation of a policy
 
-    This class is meant for programming purposes and can't be instantiated
+    Parameter
+    ---------
+    environment
+        Environment in which the policy should be training
+    hidden_layer_size
+        Number of neurons in the hidden layer of the neural network
+    learning_rate
+        Learning rate of the Adam optimizer
     """
 
     def __init__(
             self,
             environment: Environment,
-            hidden_size: int = 500,
+            hidden_layer_size: int = 500,
             learning_rate: float = 0.003,
     ):
         super().__init__(environment)
 
         # We make a simple neural net model
         self.model = torch.nn.Sequential(
-            torch.nn.Linear(self.environment.n_observations, hidden_size),
+            torch.nn.Linear(self.environment.n_observations, hidden_layer_size),
             torch.nn.ReLU(),
-            torch.nn.Linear(hidden_size, self.environment.n_actions),
+            torch.nn.Linear(hidden_layer_size, self.environment.n_actions),
             torch.nn.Softmax(dim=0)
         )
 

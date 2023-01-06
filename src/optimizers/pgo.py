@@ -6,21 +6,29 @@ from src.env.environment import Environment
 
 class PGO(AbstractOptimizer):
     """
-    Implementation of Proximal Policy Optimization
+    Implementation of Vanilla Policy Gradient Optimizer
+
+    Parameter
+    ---------
+    policy
+        Policy to optimize (living in a given environment)
+    horizon
+        Horizon of the discounted setting
+    gamma
+        Discounted setting parameter
     """
 
     def __init__(
             self,
-            environment: Environment,
             policy: AbstractPolicy,
             horizon: int,
             gamma: float
     ):
-        super().__init__(environment, policy, horizon, gamma)
+        super().__init__(policy, horizon, gamma)
 
     def step(self) -> int:
-        # We fetch the current state of the environment
-        current_state = self.environment.reset()[0]
+        # We fetch the current state of the environment in which the policy is living
+        current_state = self.policy.environment.reset()[0]
 
         # Transitions stores the history of (states, actions, rewards) at each episode
         transitions = []
@@ -41,7 +49,7 @@ class PGO(AbstractOptimizer):
             # Note that if "game_over" is True, it means that we've lost. So our model performs well if we do as
             # many episodes as possible.
             # Therefore, one score of the model is given by the length of the "transition" list.
-            current_state, _, game_over, _, _ = self.environment.step(action)
+            current_state, _, game_over, _, _ = self.policy.environment.step(action)
             if game_over:
                 break
 

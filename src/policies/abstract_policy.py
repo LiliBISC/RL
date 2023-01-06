@@ -8,6 +8,11 @@ class AbstractPolicy(ABC):
     Abstract class of any policy
 
     This class is meant for programming purposes and can't be instantiated
+
+    Parameter
+    ---------
+    environment
+        Environment in which the policy should be training
     """
 
     def __init__(

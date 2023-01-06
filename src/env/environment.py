@@ -1,4 +1,7 @@
 import gym
+import random
+import torch
+import numpy as np
 
 
 class Environment(object):
@@ -24,10 +27,16 @@ class Environment(object):
         self.n_observations = self.env.observation_space.shape[0]
         self.n_actions = self.env.action_space.n
 
+        if seed is not None:
+            self.seed_everything()
+
+    def seed_everything(self):
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        torch.manual_seed(self.seed)
+
     def reset(self):
         return self.env.reset(seed=self.seed)
 
     def step(self, action):
         return self.env.step(action)
-
-

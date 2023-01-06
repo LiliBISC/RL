@@ -12,10 +12,8 @@ class AbstractOptimizer(ABC):
 
     Parameters
     ----------
-    environment
-        Environment in which to train the model
     policy
-        Policy to optimize
+        Policy to optimize (already evolving in a given environment)
     horizon
         Horizon of the discounted setting
     gamma
@@ -24,12 +22,10 @@ class AbstractOptimizer(ABC):
 
     def __init__(
             self,
-            environment: Environment,
             policy: AbstractPolicy,
             horizon: int,
             gamma: float,
     ):
-        self.environment = environment  # a copy of the input environment
         self.policy = policy
         self.horizon = horizon
         self.gamma = gamma
