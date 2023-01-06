@@ -1,7 +1,7 @@
 from .abstract_optimizer import AbstractOptimizer
 import numpy as np
 from src.policies.abstract_policy import AbstractPolicy
-from src.env.environment import Environment
+import torch
 
 
 class PGO(AbstractOptimizer):
@@ -27,36 +27,45 @@ class PGO(AbstractOptimizer):
         super().__init__(policy, horizon, gamma)
 
     def step(self) -> int:
-        # We fetch the current state of the environment in which the policy is living
-        current_state = self.policy.environment.reset()[0]
-
-        # Transitions stores the history of (states, actions, rewards) at each episode
-        transitions = []
-
-        # We go through the episodes, up to "horizon" episodes
-        for t in range(self.horizon):
-            # We predict the probability of each action being taken regarding the current state
-            action_probabilities = self.policy.predict_proba(current_state)
-
-            # Now we draw an action with the "action_probabilities" density
-            action = np.random.choice(np.array([0, 1]), p=action_probabilities)
-
-            # We store the episode information into the transitions list
-            # We add it as a clone so the upcoming update won't change what's being stored
-            transitions.append((current_state.copy(), action, t + 1))
-
-            # We compute the next state, having the environment making a step with the chosen action of the agent
-            # Note that if "game_over" is True, it means that we've lost. So our model performs well if we do as
-            # many episodes as possible.
-            # Therefore, one score of the model is given by the length of the "transition" list.
-            current_state, _, game_over, _, _ = self.policy.environment.step(action)
-            if game_over:
-                break
-
-        # See commentary above to under why the length of "transition" is a quality indicator to maximize
-        score = len(transitions)
+        # Let the agent play in the environment with the given horizon
+        score, transitions = self.policy.play(self.horizon)
 
         # Now we improve the policy with the transitions experience,
         # with the discounted setting parameter of the problem
-        self.policy.learn_one(transitions, self.gamma)
+        # Transitions stores the history of (states, actions, rewards) at each episode
+        # We want to fetch the rewards only here
+        rewards = np.array([reward for (state, action, reward) in transitions])
+
+        # We would like to compute the total return at each episode, so first we initialize it
+        # We will approximate it by adding the rewards from some state
+        # in the episode until the end of the episode using gamma
+        G = np.zeros(len(transitions))
+        for i in range(len(transitions)):
+            # We compute the expected return of each episode
+            G_i = 0
+            power = 0
+            for j in range(i, len(transitions)):
+                G_i += (self.gamma ** power) * rewards[j]
+                power += 1
+            # Then we store it into the total return
+            G[i] = G_i
+
+        # We normalize the total return for numerical stability
+        G = G / np.max(G)
+        # We turn the arrays into tensors for computational usage in the network
+        G = torch.FloatTensor(G)
+        states = np.array([state for (state, action, reward) in transitions])
+        actions = torch.FloatTensor([action for (state, action, reward) in transitions])
+        # We make the action predictions for each state (probability of each action being taken at each state)
+        predictions = self.policy.predict_proba(states)
+        # We now fetch the probability of the chosen action at each state
+        proba_action_at_states = predictions.gather(dim=1, index=actions.long().view(-1, 1)).squeeze()
+
+        # We compute the opposite of the gradient of the loss so it's in the form of the usual gradient descent
+        # (though what we're trying to achieve is technically a gradient ascent)
+        loss = -torch.sum(torch.log(proba_action_at_states) * G)
+
+        # We do a backpropagation of the neural network to optimize the parameters with the updated loss
+        self.policy.optimize(loss)
+
         return score
