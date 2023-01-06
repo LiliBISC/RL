@@ -1,4 +1,5 @@
 from abstract_optimizer import AbstractOptimizer
+from src.policies.abstract_policy import AbstractPolicy
 
 
 class TRPO(AbstractOptimizer):
@@ -6,8 +7,14 @@ class TRPO(AbstractOptimizer):
     Implementation of Trust Region Policy Optimization
     """
 
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(
+            self,
+            env,
+            policy: AbstractPolicy,
+            horizon: int,
+            gamma: float
+    ):
+        super().__init__(env, policy, horizon, gamma)
 
-    def any_common_method(self, args):
-        raise Exception("Not implemented")
+    def step(self) -> int:
+        pass

@@ -1,2 +1,4 @@
 /.idea/*.gitignore
 .idea
+/src/__pycache__/*.pyc
+*.pyc
