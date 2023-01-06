@@ -38,10 +38,14 @@ class AbstractOptimizer(ABC):
         """
         Train the policy on the environment using the optimizer
         """
+        # Initializing the scores output
         scores = np.zeros(max_trajectory)
 
+        # We run "max_trajectory" experiments and compute the score for each of them to see model improvement
         for trajectory in range(max_trajectory):
-            score = self.step()  # we do a training step
+            # We do an optimization step of the model
+            score = self.step()
+            # Storing the output score
             scores[trajectory] = score
 
             if printEvery > 0 and trajectory % printEvery == 0 and trajectory > 0:
@@ -52,4 +56,7 @@ class AbstractOptimizer(ABC):
 
     @abstractmethod
     def step(self) -> int:
-        pass
+        """
+        Apply a step of optimization of the optimizer on the policy with the given environment
+        """
+        raise Exception("Step function is not implemented in child class")

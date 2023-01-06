@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from src.env.environment import Environment
+import numpy as np
 
 
 class AbstractPolicy(ABC):
@@ -16,13 +17,13 @@ class AbstractPolicy(ABC):
         self.environment = environment
 
     @abstractmethod
-    def predict_proba(self, state):
+    def predict_proba(self, state: np.array) -> np.array:
         """
-        Predict the probability of the given state
+        Predict the probability of each action given the current state
         """
 
     @abstractmethod
-    def learn_one(self, transitions, gamma):
+    def learn_one(self, transitions: list, gamma: float):
         """
-        Learns the transitions with the given gamma
+        Learns the transitions with the given discounted parameter gamma
         """

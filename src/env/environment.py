@@ -3,7 +3,7 @@ import gym
 
 class Environment(object):
     """
-    This is a class to instantiate an environment and get
+    This is a class to instantiate an environment in a practical way and enumerate used environments
     """
 
     CART_POL_V1 = 'CartPole-v1'

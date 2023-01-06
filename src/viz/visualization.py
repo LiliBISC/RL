@@ -1,15 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan  6 16:16:31 2023
-
-@author: lilian
-"""
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 
-def score_visualisation(score, title):
+def score_visualisation(score, title=None):
     score = score.reshape(-1, 1)
     for s in range(score.shape[1]):
         if type(score[:, s]) != pd.core.frame.DataFrame:
@@ -18,7 +12,8 @@ def score_visualisation(score, title):
         avg_score = s_.rolling(50).mean()
         std_score = s_.rolling(50).std()
         plt.figure(figsize=(16, 9))
-        plt.title(title)
+        if title is not None:
+            plt.title(title)
         plt.ylabel("Scores", fontsize=12)
         plt.xlabel("Training Epochs", fontsize=12)
         plt.plot(avg_score, color='blue', linewidth=3)
