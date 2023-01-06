@@ -31,16 +31,18 @@ class AbstractOptimizer(ABC):
         self.horizon = horizon
         self.gamma = gamma
 
-    def train(self, max_trajectory, printEvery=-1) -> list[int]:
-
-        scores = []
+    def train(self, max_trajectory, printEvery=-1) -> np.array:
+        """
+        Train the policy on the environment using the optimizer
+        """
+        scores = np.zeros(max_trajectory)
 
         for trajectory in range(max_trajectory):
             score = self.step()  # we do a training step
-            scores.append(score)
+            scores[trajectory] = score
 
             if printEvery > 0 and trajectory % printEvery == 0 and trajectory > 0:
-                print('Trajectory {}\tAverage Score: {:.2f}'.format(trajectory, np.mean(scores[-50:-1])))
+                print('Trajectory {}\tAverage Score: {:.2f}'.format(trajectory, np.mean(scores[trajectory-printEvery:trajectory])))
 
         return scores
 
