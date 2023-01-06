@@ -1,6 +1,7 @@
 from .abstract_policy import AbstractPolicy
 import torch
 import numpy as np
+from src.env.environment import Environment
 
 
 class NeuralNetPolicy(AbstractPolicy):
@@ -12,15 +13,15 @@ class NeuralNetPolicy(AbstractPolicy):
 
     def __init__(
             self,
-            env,
+            environment: Environment,
             hidden_size: int = 500,
             learning_rate: float = 0.003,
     ):
-        super().__init__(env)
+        super().__init__(environment)
         self.model = torch.nn.Sequential(
-            torch.nn.Linear(self.obs_size, hidden_size),
+            torch.nn.Linear(self.environment.n_observations, hidden_size),
             torch.nn.ReLU(),
-            torch.nn.Linear(hidden_size, self.n_actions),
+            torch.nn.Linear(hidden_size, self.environment.n_actions),
             torch.nn.Softmax(dim=0)
         )
 

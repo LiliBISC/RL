@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from src.policies.abstract_policy import AbstractPolicy
+from src.env.environment import Environment
 
 
 class AbstractOptimizer(ABC):
@@ -21,12 +22,12 @@ class AbstractOptimizer(ABC):
 
     def __init__(
             self,
-            env,
+            environment: Environment,
             policy: AbstractPolicy,
             horizon: int,
             gamma: float,
     ):
-        self.env = env  # a copy of the input environment
+        self.environment = environment  # a copy of the input environment
         self.policy = policy
         self.horizon = horizon
         self.gamma = gamma
@@ -42,7 +43,8 @@ class AbstractOptimizer(ABC):
             scores[trajectory] = score
 
             if printEvery > 0 and trajectory % printEvery == 0 and trajectory > 0:
-                print('Trajectory {}\tAverage Score: {:.2f}'.format(trajectory, np.mean(scores[trajectory-printEvery:trajectory])))
+                print('Trajectory {}\tAverage Score: {:.2f}'.format(trajectory, np.mean(
+                    scores[trajectory - printEvery:trajectory])))
 
         return scores
 

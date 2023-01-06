@@ -2,20 +2,18 @@
 Playground script for tests
 """
 
-import gym
+from src.env.environment import Environment
 from src.policies.neural_policy import NeuralNetPolicy
 from src.optimizers.pgo import PGO
 import src.viz.visualization as viz
 import matplotlib.pyplot as plt
 
-dataset = 'CartPole-v1'
+environment = Environment(Environment.CART_POL_V1)
 
-env = gym.make(dataset)
-
-policy = NeuralNetPolicy(env=env, hidden_size=256, learning_rate=0.003)
-pgo = PGO(env=env, policy=policy, horizon=500, gamma=0.99)
+policy = NeuralNetPolicy(environment=environment, hidden_size=256, learning_rate=0.003)
+pgo = PGO(environment=environment, policy=policy, horizon=500, gamma=0.99)
 pgo_scores = pgo.train(max_trajectory=500, printEvery=50)
 
-viz.score_visualisation(pgo_scores, f"PGO Scores on {dataset}")
+viz.score_visualisation(pgo_scores, f"PGO Scores on {environment.id}")
 
 plt.show()

@@ -1,6 +1,7 @@
 from .abstract_optimizer import AbstractOptimizer
 import numpy as np
 from src.policies.abstract_policy import AbstractPolicy
+from src.env.environment import Environment
 
 
 class PGO(AbstractOptimizer):
@@ -10,15 +11,15 @@ class PGO(AbstractOptimizer):
 
     def __init__(
             self,
-            env,
+            environment: Environment,
             policy: AbstractPolicy,
             horizon: int,
             gamma: float
     ):
-        super().__init__(env, policy, horizon, gamma)
+        super().__init__(environment, policy, horizon, gamma)
 
     def step(self) -> int:
-        curr_state = self.env.reset()[0]
+        curr_state = self.environment.reset()[0]
         done = False
         transitions = []
 
@@ -26,7 +27,7 @@ class PGO(AbstractOptimizer):
             act_prob = self.policy.predict_proba(curr_state)
             action = np.random.choice(np.array([0, 1]), p=act_prob.data.numpy())
             prev_state = curr_state
-            curr_state, _, done, info, _ = self.env.step(action)
+            curr_state, _, done, info, _ = self.environment.step(action)
             transitions.append((prev_state, action, t + 1))
             if done:
                 break

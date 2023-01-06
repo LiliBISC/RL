@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from src.env.environment import Environment
 
 
 class AbstractPolicy(ABC):
@@ -8,10 +9,11 @@ class AbstractPolicy(ABC):
     This class is meant for programming purposes and can't be instantiated
     """
 
-    def __init__(self, env):
-        self.env = env
-        self.obs_size = env.observation_space.shape[0]
-        self.n_actions = env.action_space.n
+    def __init__(
+            self,
+            environment: Environment
+    ):
+        self.environment = environment
 
     @abstractmethod
     def predict_proba(self, state):
