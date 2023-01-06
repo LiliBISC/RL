@@ -12,12 +12,14 @@ class AbstractOptimizer(ABC):
 
     Parameters
     ----------
+    environment
+        Environment in which to train the model
     policy
         Policy to optimize
-    learning_rate
-        A strictly positive float
     horizon
         Horizon of the discounted setting
+    gamma
+        Discounted setting parameter
     """
 
     def __init__(
