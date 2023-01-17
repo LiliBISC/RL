@@ -40,3 +40,11 @@ class Environment(object):
 
     def step(self, action):
         return self.env.step(action)
+
+    def observation_space_shape(self):
+        """Get the shape of the observations"""
+        return self.env.observation_space.shape
+
+    def action_space_shape(self):
+        """Get the shape of the actions"""
+        return self.env.action_space.shape

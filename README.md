@@ -9,11 +9,9 @@ Lien Overleaf: https://www.overleaf.com/project/63b81ce7dab813b0e61677f0
 - Article d'étude: https://arxiv.org/pdf/1707.06347.pdf
 - Blog post OpenAi: https://openai.com/blog/openai-baselines-ppo
 - Documentation sur la KL: https://fr.wikipedia.org/wiki/Divergence_de_Kullback-Leibler
+- Une explication step by step de la PPO: https://huggingface.co/blog/deep-rl-ppo
 
 ## Implémentations et cas pratique:
-
 - GitHub de l'article: https://github.com/openai/baselines
 - Une implémentation de PPO et DDPG: https://github.com/upb-lea/reinforcement_learning_course_materials/blob/master/exercises/solutions/ex13/DDPG_and_PPO.ipynb
 - PPO from scratch: https://github.com/clwainwright/proximal_policy_optimization
-- Policy gradient : https://towardsdatascience.com/policy-gradient-methods-104c783251e0
-- TRPO and PPO : https://towardsdatascience.com/proximal-policy-optimization-ppo-explained-abed1952457b

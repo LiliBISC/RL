@@ -38,7 +38,12 @@ class NeuralNetPolicy(AbstractPolicy):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
 
     def predict_proba(self, state: torch.Tensor) -> torch.Tensor:
+        """Predict the probabilities of each action at given state"""
         return self.model(torch.from_numpy(state).float())
+
+    def predict(self, state: torch.Tensor):
+        """Predicts the best action at a given state"""
+        return np.argmax(self.predict_proba(state).numpy(), axis=1)
 
     def optimize(self, loss):
         self.optimizer.zero_grad()

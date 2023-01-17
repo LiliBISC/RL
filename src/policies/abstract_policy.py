@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from src.env.environment import Environment
 import numpy as np
+import torch
+from torch.distributions.categorical import Categorical
 
 
-class AbstractPolicy(ABC):
+class AbstractPolicy(ABC, object):
     """
     Abstract class of any policy
 
@@ -20,12 +22,48 @@ class AbstractPolicy(ABC):
             environment: Environment
     ):
         self.environment = environment
+        # There's only 1 environment to go into in that situation
+        self.actor = self.layer_init(torch.nn.Linear(512, 1), std=0.01)
+        self.critic = self.layer_init(torch.nn.Linear(512, 1), std=1)
+        # Initialize the model in child class
+        self.model = None
+
+    def layer_init(self, layer, std=np.sqrt(2), bias_const=0.0):
+        torch.nn.init.orthogonal_(layer.weight, std)
+        torch.nn.init.constant_(layer.bias, bias_const)
+        return layer
+
+    def get_value(self, x):
+        return self.critic(self.model(x / 255.0))
+
+    def get_action_and_value(self, x, action=None):
+        hidden = self.model(x / 255.0)
+        logits = self.actor(hidden)
+        probs = Categorical(logits=logits)
+        if action is None:
+            action = probs.sample()
+        return action, probs.log_prob(action), probs.entropy(), self.critic(hidden)
 
     @abstractmethod
     def predict_proba(self, state):
         """
         Predict the probability of each action given the current state
         """
+    @abstractmethod
+    def predict(self, state):
+        """Predict the best action at given state"""
+
+    def predict_action_proba_at_state(self, state, action):
+        """
+        Predict the probability of the given action at the given state
+        """
+        return self.predict_proba(state)[action]
+
+    def log_proba_action(self, state, action):
+        """
+        Log probability of the given action at the given state
+        """
+        return torch.log(self.predict_action_proba_at_state(state, action))
 
     @abstractmethod
     def optimize(self, *args):
