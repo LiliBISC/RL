@@ -23,17 +23,19 @@ class AbstractPolicy(ABC, object):
     ):
         self.environment = environment
         # There's only 1 environment to go into in that situation
-        self.actor = self.layer_init(torch.nn.Linear(512, 1), std=0.01)
-        self.critic = self.layer_init(torch.nn.Linear(512, 1), std=1)
+        self.actor = self.layer_init(torch.nn.Linear(2, 1), std=0.01)
+        self.critic = self.layer_init(torch.nn.Linear(2, 1), std=1)
         # Initialize the model in child class
         self.model = None
 
     def layer_init(self, layer, std=np.sqrt(2), bias_const=0.0):
+        """Fast initializer of a given layer (meant to be used with actor and critic)"""
         torch.nn.init.orthogonal_(layer.weight, std)
         torch.nn.init.constant_(layer.bias, bias_const)
         return layer
 
     def get_value(self, x):
+        """Get return value of a given action in the model"""
         return self.critic(self.model(x / 255.0))
 
     def get_action_and_value(self, x, action=None):
