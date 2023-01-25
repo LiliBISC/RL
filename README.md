@@ -10,6 +10,7 @@ Lien Overleaf: https://www.overleaf.com/project/63b81ce7dab813b0e61677f0
 - Blog post OpenAi: https://openai.com/blog/openai-baselines-ppo
 - Documentation sur la KL: https://fr.wikipedia.org/wiki/Divergence_de_Kullback-Leibler
 - Une explication step by step de la PPO: https://huggingface.co/blog/deep-rl-ppo
+- Policy Gradient Algorithms: https://lilianweng.github.io/posts/2018-04-08-policy-gradient/
 
 ## Implémentations et cas pratique:
 - GitHub de l'article: https://github.com/openai/baselines
