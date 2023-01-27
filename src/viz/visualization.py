@@ -9,14 +9,17 @@ def score_visualisation(score, title=None):
         if type(score[:, s]) != pd.core.frame.DataFrame:
             s_ = pd.DataFrame(score[:, s])
 
-        avg_score = s_.rolling(50).mean()
-        std_score = s_.rolling(50).std()
+        avg_score = s_.rolling(5).mean()
+        min_score = s_.rolling(5).min()
+        max_score = s_.rolling(5).max()
         plt.figure(figsize=(16, 9))
         if title is not None:
             plt.title(title)
         plt.ylabel("Scores", fontsize=12)
         plt.xlabel("Training Epochs", fontsize=12)
         plt.plot(avg_score, color='blue', linewidth=3)
-        plt.fill_between(np.arange(len(std_score)), list(std_score.iloc[:, 0]),
-                         list(avg_score.iloc[:, 0] + std_score.iloc[:, 0]), alpha=0.2)
+        plt.fill_between(np.arange(len(min_score)), list(min_score.iloc[:, 0]),
+                         list(max_score.iloc[:, 0]), alpha=0.2)
+        plt.yscale('log')
         plt.grid(True)
+        plt.show()
