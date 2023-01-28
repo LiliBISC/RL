@@ -8,6 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+from abstract_optimizer import AbstractOptimizer
+from abstract_policy import AbstractPolicy
 
 sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
 from environment import Environment
@@ -17,7 +19,7 @@ class A2C(nn.Module):
     Implementation of ActorCritics
     """
 
-    def __init__(self, environment : Environment, learning_rate : float, horizon : int): 
+    def __init__(self, policy : AbstractPolicy, environment : Environment, learning_rate : float, horizon : int): 
         super(A2C, self).__init__()
         self.environment = environment
         self.learning_rate = learning_rate

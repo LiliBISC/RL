@@ -9,9 +9,9 @@ def score_visualisation(score, title=None):
         if type(score[:, s]) != pd.core.frame.DataFrame:
             s_ = pd.DataFrame(score[:, s])
 
-        avg_score = s_.rolling(5).mean()
-        min_score = s_.rolling(5).min()
-        max_score = s_.rolling(5).max()
+        avg_score = s_.rolling(50).mean()
+        min_score = s_.rolling(50).min()
+        max_score = s_.rolling(50).max()
         plt.figure(figsize=(16, 9))
         if title is not None:
             plt.title(title)
