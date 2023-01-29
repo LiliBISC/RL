@@ -1,6 +1,5 @@
 import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies')
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/optimizers')
+sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
 
 import numpy as np
 import torch
@@ -8,8 +7,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
 from environment import Environment
 
 class A2C(nn.Module):

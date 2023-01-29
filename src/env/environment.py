@@ -16,6 +16,7 @@ class Environment(object):
             env_id: str,
             seed: int = None,
     ):
+        print(gym.envs.registry)
         if env_id not in gym.envs.registry.keys():
             raise Exception(
                 f"{env_id} is not a registered environment in gym. \nAvailable environments: \n{list(gym.envs.registry.keys())}")
