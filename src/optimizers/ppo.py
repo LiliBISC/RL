@@ -50,7 +50,7 @@ class PPO(AbstractOptimizer):
         # Policy loss (clipped)
         loss_clip = torch.max(
             - advantage * ratio
-            - advantage * self.clipped_ratio(ratio)
+            - advantage * self.clipped_ratio(ratio) #potential mistake here
         ).mean()
 
         # Entropy loss
