@@ -6,8 +6,9 @@ import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 from torch.optim import Adam
-from environment import Environment
+from src.env.environment import Environment
 from collections import namedtuple
+import ipdb 
 
 class TRPO():
     def __init__(self,
@@ -37,7 +38,10 @@ class TRPO():
         self.Rollout = namedtuple('Rollout', ['states', 'actions', 'rewards', 'next_states', ])
 
     def get_action(self, state):
-        state = torch.tensor(state).float().unsqueeze(0)  # Turn state into a batch with a single element
+        try: 
+            state = torch.tensor(state).float().unsqueeze(0)  # Turn state into a batch with a single element
+        except:
+            state = torch.tensor(state[0]).float().unsqueeze(0)
         dist = Categorical(self.actor(state))  # Create a distribution from probabilities for actions
         return dist.sample().item()
 
@@ -137,7 +141,7 @@ class TRPO():
 
         g = self.flat_grad(L, parameters, retain_graph=True)
         d_kl = self.flat_grad(KL, parameters, create_graph=True)  # Create graph, because we will call backward() on it (for HVP)
-
+        ipdb.set_trace()
         def HVP(v):
             return self.flat_grad(d_kl @ v, parameters, retain_graph=True)
 
@@ -167,6 +171,7 @@ class TRPO():
         i = 0
         while not criterion((0.9 ** i) * max_step) and i < 10:
             i += 1
+        ipdb.set_trace()
 
     def train(self, num_rollouts=10):
         mean_total_rewards = []
@@ -177,16 +182,17 @@ class TRPO():
             rollout_total_rewards = []
 
             for t in range(num_rollouts):
-                state = self.environment.reset()
+                state = self.environment.reset()[0]
                 done = False
 
                 samples = []
-
                 while not done:
                     with torch.no_grad():
                         action = self.get_action(state)
-
-                    next_state, reward, done, _ = self.environment.step(action)
+                    try:
+                        next_state, reward, done, _, _ = self.environment.step(action)
+                    except:
+                        ipdb.set_trace()
 
                     # Collect samples
                     samples.append((state, action, reward, next_state))
@@ -205,7 +211,6 @@ class TRPO():
 
                 rollout_total_rewards.append(rewards.sum().item())
                 global_rollout += 1
-
             self.update_agent(rollouts)
             mtr = np.mean(rollout_total_rewards)
             print(f'E: {epoch}.\tMean total reward across {num_rollouts} rollouts: {mtr}')
@@ -214,16 +219,4 @@ class TRPO():
         return mean_total_rewards
 
 
-import gym
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/viz')
-import visualization as viz
 
-environment = gym.make('CartPole-v1')
-trpo = TRPO(environment = environment, learning_rate=0.003, horizon=150, actor_hidden = 64, critic_hidden= 64)
-
-trpo_score = trpo.train(num_rollouts=5)
-
-
-
-viz.score_visualisation(np.array(trpo_score))
