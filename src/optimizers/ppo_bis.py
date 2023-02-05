@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 from torch.optim import Adam
-from environment import Environment
-from abstract_policy import AbstractPolicy
+from src.env.environment import Environment
+from src.policies.abstract_policy import AbstractPolicy
 from collections import namedtuple
 
 
@@ -24,12 +24,15 @@ class PPO:
         critic_hidden: int,
         clipping: float = 0.2,
         max_d_kl: float = 0.01,
+        coef_entropy: float = 0,
     ):
 
         self.environment = environment
         self.learning_rate = learning_rate
         self.horizon = horizon
         self.max_d_kl = max_d_kl
+        self.clipping = clipping
+        self.coef_entropy = coef_entropy
 
         self.actor = nn.Sequential(
             nn.Linear(self.environment.observation_space.shape[0], actor_hidden),
@@ -46,6 +49,7 @@ class PPO:
         )
 
         self.critic_optimizer = Adam(self.critic.parameters(), lr=self.learning_rate)
+        self.actor_optimizer = Adam(self.actor.parameters(), lr=self.learning_rate)
 
         self.Rollout = namedtuple(
             "Rollout",
@@ -82,9 +86,11 @@ class PPO:
         return advantages
 
     def clipped_ratio(self, ratio):
-        pass
+        """Clipped ratio to avoid too big policy updates"""
+        return torch.clamp(ratio, 1 - self.clipping, 1 + self.clipping)
+        
 
-    def compute_loss(self, advantage, ratio, values, rewards, entropy):
+    def compute_loss_actor(self, advantage, ratio, values, rewards, entropy=0):
         loss_clip = torch.min(
             advantage * ratio,
             advantage * self.clipped_ratio(ratio),
@@ -100,56 +106,14 @@ class PPO:
             loss_clip - self.coef_value * loss_value + self.coef_entropy * loss_entropy
         )
 
+    def update_actor(self, ratio, advantages, values, rewards, entropy=0):
+        loss = self.compute_loss_actor(advantages, ratio,values, rewards, entropy)  # MSE
+        self.actor_optimizer.zero_grad()
+        loss.backward()
+        self.actor_optimizer.step()
+
     def surrogate_loss(self, new_probabilities, old_probabilities, advantages):
         return (new_probabilities / old_probabilities * advantages).mean()
-
-    def kl_div(self, p, q):
-        p = p.detach()
-        return (p * (p.log() - q.log())).sum(-1).mean()
-
-    def flat_grad(self, y, x, retain_graph=False, create_graph=False):
-        if create_graph:
-            retain_graph = True
-
-        g = torch.autograd.grad(
-            y, x, retain_graph=retain_graph, create_graph=create_graph
-        )
-        g = torch.cat([t.view(-1) for t in g])
-        return g
-
-    def conjugate_gradient(self, A, b, delta=0.0, max_iterations=10):
-        x = torch.zeros_like(b)
-        r = b.clone()
-        p = b.clone()
-
-        i = 0
-        while i < max_iterations:
-            AVP = A(p)
-
-            dot_old = r @ r
-            alpha = dot_old / (p @ AVP)
-
-            x_new = x + alpha * p
-
-            if (x - x_new).norm() <= delta:
-                return x_new
-
-            i += 1
-            r = r - alpha * AVP
-
-            beta = (r @ r) / dot_old
-            p = r + beta * p
-
-            x = x_new
-        return x
-
-    def apply_update(self, grad_flattened):
-        n = 0
-        for p in self.actor.parameters():
-            numel = p.numel()
-            g = grad_flattened[n : n + numel].view(p.shape)
-            p.data += g
-            n += numel
 
     def update_agent(self, rollouts):
         states = torch.cat([r.states for r in rollouts], dim=0)
@@ -174,51 +138,15 @@ class PPO:
 
         # We will calculate the gradient wrt to the new probabilities (surrogate function),
         # so second probabilities should be treated as a constant
-        L = self.surrogate_loss(probabilities, probabilities.detach(), advantages)
-        KL = self.kl_div(distribution, distribution)
+        # L = self.surrogate_loss(probabilities, probabilities.detach(), advantages)
+        # KL = self.kl_div(distribution, distribution)
+        probabilities_old = probabilities.detach()
+        ratio = probabilities/probabilities_old
+        self.update_actor()
 
         parameters = list(self.actor.parameters())
 
-        g = self.flat_grad(L, parameters, retain_graph=True)
-        d_kl = self.flat_grad(
-            KL, parameters, create_graph=True
-        )  # Create graph, because we will call backward() on it (for HVP)
 
-        def HVP(v):
-            return self.flat_grad(d_kl @ v, parameters, retain_graph=True)
-
-        search_dir = self.conjugate_gradient(HVP, g)
-        max_length = torch.sqrt(2 * self.max_d_kl / (search_dir @ HVP(search_dir)))
-        max_step = max_length * search_dir
-
-        def criterion(step):
-            self.apply_update(step)
-
-            with torch.no_grad():
-                distribution_new = self.actor(states)
-                distribution_new = torch.distributions.utils.clamp_probs(
-                    distribution_new
-                )
-                probabilities_new = distribution_new[
-                    range(distribution_new.shape[0]), actions
-                ]
-
-                L_new = self.surrogate_loss(
-                    probabilities_new, probabilities, advantages
-                )
-                KL_new = self.kl_div(distribution, distribution_new)
-
-            L_improvement = L_new - L
-
-            if L_improvement > 0 and KL_new <= self.max_d_kl:
-                return True
-
-            self.apply_update(-step)
-            return False
-
-        i = 0
-        while not criterion((0.9**i) * max_step) and i < 10:
-            i += 1
 
     def train(self, num_rollouts=10):
         mean_total_rewards = []
