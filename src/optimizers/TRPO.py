@@ -141,7 +141,7 @@ class TRPO():
 
         g = self.flat_grad(L, parameters, retain_graph=True)
         d_kl = self.flat_grad(KL, parameters, create_graph=True)  # Create graph, because we will call backward() on it (for HVP)
-        ipdb.set_trace()
+        # ipdb.set_trace()
         def HVP(v):
             return self.flat_grad(d_kl @ v, parameters, retain_graph=True)
 
@@ -171,7 +171,6 @@ class TRPO():
         i = 0
         while not criterion((0.9 ** i) * max_step) and i < 10:
             i += 1
-        ipdb.set_trace()
 
     def train(self, num_rollouts=10):
         mean_total_rewards = []
@@ -211,10 +210,12 @@ class TRPO():
 
                 rollout_total_rewards.append(rewards.sum().item())
                 global_rollout += 1
+            print(f'rollout phase for epoch {epoch} done')
             self.update_agent(rollouts)
             mtr = np.mean(rollout_total_rewards)
             print(f'E: {epoch}.\tMean total reward across {num_rollouts} rollouts: {mtr}')
-
+            if mtr > 3000:
+                ipdb.set_trace()
             mean_total_rewards.append(mtr)
         return mean_total_rewards
 
