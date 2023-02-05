@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 import sys
 sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies')
-from abstract_policy import AbstractPolicy
+from src.policies.abstract_policy import AbstractPolicy
 sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
-from environment import Environment
+from src.env.environment import Environment
 
 
 class AbstractOptimizer(ABC):
@@ -50,6 +50,8 @@ class AbstractOptimizer(ABC):
             if printEvery > 0 and trajectory % printEvery == 0 and trajectory > 0:
                 print('Trajectory {}\tAverage Score: {:.2f}'.format(trajectory, np.mean(
                     scores[trajectory - printEvery:trajectory])))
+            
+            print(f"trajectory {trajectory} is done")
 
         return scores
 
