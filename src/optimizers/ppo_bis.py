@@ -10,21 +10,20 @@ from torch.optim import Adam
 from src.env.environment import Environment
 from src.policies.abstract_policy import AbstractPolicy
 from collections import namedtuple
-
+import ipdb
 
 class PPO:
     def __init__(
         self,
         environment,
-        policy: AbstractPolicy,
         learning_rate: float,
         horizon: int,
-        gamma: float,
         actor_hidden: int,
         critic_hidden: int,
         clipping: float = 0.2,
         max_d_kl: float = 0.01,
         coef_entropy: float = 0,
+        coef_value:float =0,
     ):
 
         self.environment = environment
@@ -33,6 +32,7 @@ class PPO:
         self.max_d_kl = max_d_kl
         self.clipping = clipping
         self.coef_entropy = coef_entropy
+        self.coef_value = coef_value
 
         self.actor = nn.Sequential(
             nn.Linear(self.environment.observation_space.shape[0], actor_hidden),
@@ -83,6 +83,7 @@ class PPO:
         for i in reversed(range(rewards.shape[0])):
             last_value = next_values[i] = rewards[i] + 0.99 * last_value
         advantages = next_values - values
+        ipdb.set_trace()
         return advantages
 
     def clipped_ratio(self, ratio):
@@ -106,16 +107,13 @@ class PPO:
             loss_clip - self.coef_value * loss_value + self.coef_entropy * loss_entropy
         )
 
-    def update_actor(self, ratio, advantages, values, rewards, entropy=0):
-        loss = self.compute_loss_actor(advantages, ratio,values, rewards, entropy)  # MSE
+    def update_actor(self, ratio, advantages, values, rewards, entropy):
+        actor_loss = self.compute_loss_actor(advantages, ratio,values, rewards, entropy)  # MSE
         self.actor_optimizer.zero_grad()
-        loss.backward()
+        actor_loss.backward(retain_graph=True)
         self.actor_optimizer.step()
 
-    def surrogate_loss(self, new_probabilities, old_probabilities, advantages):
-        return (new_probabilities / old_probabilities * advantages).mean()
-
-    def update_agent(self, rollouts):
+    def update_agent(self, rollouts, rewards):
         states = torch.cat([r.states for r in rollouts], dim=0)
         actions = torch.cat([r.actions for r in rollouts], dim=0).flatten()
 
@@ -128,7 +126,7 @@ class PPO:
         # Normalize advantages to reduce skewness and improve convergence
         advantages = (advantages - advantages.mean()) / advantages.std()
 
-        self.update_critic(advantages)
+        
 
         distribution = self.actor(states)
         distribution = torch.distributions.utils.clamp_probs(distribution)
@@ -142,11 +140,15 @@ class PPO:
         # KL = self.kl_div(distribution, distribution)
         probabilities_old = probabilities.detach()
         ratio = probabilities/probabilities_old
-        self.update_actor()
-
-        parameters = list(self.actor.parameters())
-
-
+        values = entropy = torch.zeros(ratio.shape[0])
+        try:
+            self.update_actor(ratio, advantages, values, rewards,entropy)
+        except:
+            ipdb.set_trace()
+        try:
+            self.update_critic(advantages)
+        except:
+            ipdb.set_trace()
 
     def train(self, num_rollouts=10):
         mean_total_rewards = []
@@ -157,7 +159,7 @@ class PPO:
             rollout_total_rewards = []
 
             for t in range(num_rollouts):
-                state = self.environment.reset()
+                state = self.environment.reset()[0]
                 done = False
 
                 samples = []
@@ -166,7 +168,7 @@ class PPO:
                     with torch.no_grad():
                         action = self.get_action(state)
 
-                    next_state, reward, done, _ = self.environment.step(action)
+                    next_state, reward, done, _,_ = self.environment.step(action)
 
                     # Collect samples
                     samples.append((state, action, reward, next_state))
@@ -190,7 +192,7 @@ class PPO:
                 rollout_total_rewards.append(rewards.sum().item())
                 global_rollout += 1
 
-            self.update_agent(rollouts)
+            self.update_agent(rollouts, torch.Tensor(rewards))
             mtr = np.mean(rollout_total_rewards)
             print(
                 f"E: {epoch}.\tMean total reward across {num_rollouts} rollouts: {mtr}"
@@ -203,19 +205,19 @@ class PPO:
 import gym
 import sys
 
-sys.path.append("C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/viz")
-import visualization as viz
+# sys.path.append("C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/viz")
+# import visualization as viz
 
-environment = gym.make("CartPole-v1")
-trpo = PPO(
-    environment=environment,
-    learning_rate=0.003,
-    horizon=150,
-    actor_hidden=64,
-    critic_hidden=64,
-)
+# environment = gym.make("CartPole-v1")
+# trpo = PPO(
+#     environment=environment,
+#     learning_rate=0.003,
+#     horizon=150,
+#     actor_hidden=64,
+#     critic_hidden=64,
+# )
 
-trpo_score = trpo.train(num_rollouts=5)
+# trpo_score = trpo.train(num_rollouts=5)
 
 
-viz.score_visualisation(np.array(trpo_score))
+# viz.score_visualisation(np.array(trpo_score))
