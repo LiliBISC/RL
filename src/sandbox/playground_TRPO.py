@@ -43,4 +43,4 @@ def kl_graph(kl_list, duration=400):
     plt.show()
 
 
-kl_graph([1e-4, 1e-3, 1e-2])
+kl_graph([1e-4, 3e-3, 2e-2])
