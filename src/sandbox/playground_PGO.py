@@ -8,7 +8,7 @@ from src.optimizers.pgo import PGO
 import src.viz.visualization as viz
 import matplotlib.pyplot as plt
 
-environment = Environment(Environment.CART_POL_V1, seed=0)
+environment = Environment(Environment.CART_POL_V1, seed=0, max_duration=1000)
 
 policy = NeuralNetPolicy(environment=environment, hidden_layer_size=256, learning_rate=0.003)
 pgo = PGO(policy=policy, horizon=500, gamma=0.99)
