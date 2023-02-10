@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies')
-from abstract_policy import AbstractPolicy
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
-from environment import Environment
+from src.policies.abstract_policy import AbstractPolicy
+from src.env.environment import Environment
 
 
 class AbstractOptimizer(ABC):

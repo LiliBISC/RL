@@ -1,10 +1,7 @@
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies')
-from abstract_policy import AbstractPolicy
+from src.policies.abstract_policy import AbstractPolicy
 import torch
 import numpy as np
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
-from environment import Environment
+from src.env.environment import Environment
 
 
 class NeuralNetPolicy(AbstractPolicy):

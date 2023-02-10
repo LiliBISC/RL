@@ -1,9 +1,6 @@
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/optimizers')
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies')
 from abstract_optimizer import AbstractOptimizer
 import torch
-from abstract_policy import AbstractPolicy
+from src.policies.abstract_policy import AbstractPolicy
 
 
 class PPO(AbstractOptimizer):

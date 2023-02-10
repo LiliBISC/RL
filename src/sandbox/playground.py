@@ -2,15 +2,10 @@
 Playground script for tests
 """
 
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
-from environment import Environment
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies')
-from neural_policy import NeuralNetPolicy
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/optimizers')
-from pgo import PGO
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/viz')
-import visualization as viz
+from src.env.environment import Environment
+from src.policies.neural_policy import NeuralNetPolicy
+from src.optimizers.pgo import PGO
+import src.viz.visualization as viz
 import matplotlib.pyplot as plt
 
 environment = Environment(Environment.CART_POL_V1, seed=0)

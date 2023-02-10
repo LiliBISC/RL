@@ -1,12 +1,9 @@
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
-
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 from torch.optim import Adam
-from environment import Environment
+from src.env.environment import Environment
 from collections import namedtuple
 
 class TRPO():

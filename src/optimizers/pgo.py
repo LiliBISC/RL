@@ -1,9 +1,6 @@
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies')
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/optimizers')
-from abstract_optimizer import AbstractOptimizer
+from src.optimizers.abstract_optimizer import AbstractOptimizer
 import numpy as np
-from abstract_policy import AbstractPolicy
+from src.policies.abstract_policy import AbstractPolicy
 import torch
 
 
