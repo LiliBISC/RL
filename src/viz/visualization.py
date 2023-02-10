@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 
-def score_visualisation(score, title=None):
+def score_visualisation(score, title=None, show_variance=False):
     if type(score) == pd.core.frame.DataFrame:
         plt.figure(figsize=(16, 9))
         if title is not None:
@@ -17,8 +17,9 @@ def score_visualisation(score, title=None):
             min_score = score.loc[:,c].rolling(50).min()
             max_score = score.loc[:,c].rolling(50).max()
             plt.plot(avg_score, linewidth=3, label = c)
-            plt.fill_between(np.arange(len(min_score)), list(min_score.to_numpy()),
-                            list(max_score.to_numpy()), alpha=0.2)
+            if show_variance:
+                plt.fill_between(np.arange(len(min_score)), list(min_score.to_numpy()),
+                                list(max_score.to_numpy()), alpha=0.2)
         plt.legend(loc='best')
         plt.show()
     else :
