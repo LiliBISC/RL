@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from src.env.environment import Environment
 from torch.autograd import Variable
 
 class A2C(nn.Module):
@@ -11,7 +12,7 @@ class A2C(nn.Module):
     """
 
     def __init__(self, 
-                environment, 
+                environment: Environment,
                 learning_rate : float,
                 horizon : int, 
                 actor_hidden : int = 64, 
@@ -21,11 +22,11 @@ class A2C(nn.Module):
         self.learning_rate = learning_rate
         self.horizon = horizon
 
-        self.linear1 = nn.Linear(self.environment.observation_space.shape[0], actor_hidden)
+        self.linear1 = nn.Linear(self.environment.observation_space_shape()[0], actor_hidden)
         self.linear2 = nn.Linear(actor_hidden, 128)
         self.linear3 = nn.Linear(128, actor_hidden)
         
-        self.actor = nn.Linear(actor_hidden, self.environment.action_space.n)
+        self.actor = nn.Linear(actor_hidden, self.environment.n_actions)
         self.critic = nn.Linear(critic_hidden, 1)
 
 
@@ -116,7 +117,7 @@ class A2C(nn.Module):
                 s = torch.from_numpy(state).float().unsqueeze(0)
                 action_probs = self.get_action_probs(Variable(s))
                 action = action_probs.multinomial(num_samples=1).data[0][0]
-                next_state, reward, done, _, = self.environment.step(int(action))
+                next_state, reward, done, _, _ = self.environment.step(int(action))
                 
                 states.append(state)
                 actions.append(action)
@@ -144,15 +145,4 @@ class A2C(nn.Module):
             scores.append(len(rewards))
 
         return np.array(scores)
-
-import gym
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/viz')
-import matplotlib.pyplot as plt
-
-environment = gym.make('CartPole-v1')
-a2c = A2C(environment = environment, learning_rate=0.003, horizon=500, actor_hidden = 64, critic_hidden= 64)
-
-a2c_score = a2c.train()
-
-plt.plot(a2c_score)
 
