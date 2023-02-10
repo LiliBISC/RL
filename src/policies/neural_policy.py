@@ -1,9 +1,6 @@
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies')
 from src.policies.abstract_policy import AbstractPolicy
 import torch
 import numpy as np
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
 from src.env.environment import Environment
 
 

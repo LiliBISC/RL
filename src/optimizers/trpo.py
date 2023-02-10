@@ -1,6 +1,3 @@
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -10,28 +7,29 @@ from src.env.environment import Environment
 from collections import namedtuple
 import ipdb 
 
+
 class TRPO():
     def __init__(self,
-                environment,
-                learning_rate : float,
-                horizon : int,
-                actor_hidden : int, 
-                critic_hidden : int,
-                max_d_kl : float = 0.01):
+                 environment: Environment,
+                 learning_rate: float,
+                 horizon: int,
+                 actor_hidden: int,
+                 critic_hidden: int,
+                 max_d_kl: float = 0.01):
         self.environment = environment
         self.learning_rate = learning_rate
         self.horizon = horizon
         self.max_d_kl = max_d_kl
 
-        self.actor = nn.Sequential(nn.Linear(self.environment.observation_space.shape[0], actor_hidden),
-                                nn.ReLU(),
-                                nn.Linear(actor_hidden, self.environment.action_space.n),
-                                nn.Softmax(dim=1))
+        self.actor = nn.Sequential(nn.Linear(self.environment.observation_space_shape()[0], actor_hidden),
+                                   nn.ReLU(),
+                                   nn.Linear(actor_hidden, self.environment.n_actions),
+                                   nn.Softmax(dim=1))
 
         # Critic takes a state and returns its values
-        self.critic = nn.Sequential(nn.Linear(self.environment.observation_space.shape[0], critic_hidden),
-                                nn.ReLU(),
-                                nn.Linear(critic_hidden, 1))
+        self.critic = nn.Sequential(nn.Linear(self.environment.observation_space_shape()[0], critic_hidden),
+                                    nn.ReLU(),
+                                    nn.Linear(critic_hidden, 1))
 
         self.critic_optimizer = Adam(self.critic.parameters(), lr=self.learning_rate)
 
@@ -60,15 +58,12 @@ class TRPO():
         advantages = next_values - values
         return advantages
 
-
     def surrogate_loss(self, new_probabilities, old_probabilities, advantages):
         return (new_probabilities / old_probabilities * advantages).mean()
-
 
     def kl_div(self, p, q):
         p = p.detach()
         return (p * (p.log() - q.log())).sum(-1).mean()
-
 
     def flat_grad(self, y, x, retain_graph=False, create_graph=False):
         if create_graph:
@@ -77,7 +72,6 @@ class TRPO():
         g = torch.autograd.grad(y, x, retain_graph=retain_graph, create_graph=create_graph)
         g = torch.cat([t.view(-1) for t in g])
         return g
-
 
     def conjugate_gradient(self, A, b, delta=0., max_iterations=10):
         x = torch.zeros_like(b)
@@ -105,7 +99,6 @@ class TRPO():
             x = x_new
         return x
 
-
     def apply_update(self, grad_flattened):
         n = 0
         for p in self.actor.parameters():
@@ -118,7 +111,8 @@ class TRPO():
         states = torch.cat([r.states for r in rollouts], dim=0)
         actions = torch.cat([r.actions for r in rollouts], dim=0).flatten()
 
-        advantages = [self.estimate_advantages(states, next_states[-1], rewards) for states, _, rewards, next_states in rollouts]
+        advantages = [self.estimate_advantages(states, next_states[-1], rewards) for states, _, rewards, next_states in
+                      rollouts]
         advantages = torch.cat(advantages, dim=0).flatten()
 
         # Normalize advantages to reduce skewness and improve convergence
@@ -140,8 +134,9 @@ class TRPO():
         parameters = list(self.actor.parameters())
 
         g = self.flat_grad(L, parameters, retain_graph=True)
-        d_kl = self.flat_grad(KL, parameters, create_graph=True)  # Create graph, because we will call backward() on it (for HVP)
-        # ipdb.set_trace()
+        d_kl = self.flat_grad(KL, parameters,
+                              create_graph=True)  # Create graph, because we will call backward() on it (for HVP)
+
         def HVP(v):
             return self.flat_grad(d_kl @ v, parameters, retain_graph=True)
 
@@ -181,22 +176,26 @@ class TRPO():
             rollout_total_rewards = []
 
             for t in range(num_rollouts):
-                state = self.environment.reset()[0]
+                state, _ = self.environment.reset()
                 done = False
 
                 samples = []
+
+                i = 0
                 while not done:
+                    i += 1
                     with torch.no_grad():
                         action = self.get_action(state)
-                    try:
-                        next_state, reward, done, _, _ = self.environment.step(action)
-                    except:
-                        ipdb.set_trace()
+
+                    next_state, reward, done, _, _ = self.environment.step(action)
 
                     # Collect samples
                     samples.append((state, action, reward, next_state))
 
                     state = next_state
+
+                    if i >= self.environment.max_duration:
+                        done = True
 
                 # Transpose our samples
                 states, actions, rewards, next_states = zip(*samples)
@@ -218,6 +217,3 @@ class TRPO():
                 ipdb.set_trace()
             mean_total_rewards.append(mtr)
         return mean_total_rewards
-
-
-

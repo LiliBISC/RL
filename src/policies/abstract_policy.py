@@ -1,6 +1,4 @@
 from abc import ABC, abstractmethod
-import sys
-sys.path.append('C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env')
 from src.env.environment import Environment
 import numpy as np
 import torch
