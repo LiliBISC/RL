@@ -56,32 +56,6 @@ class PPO(AbstractOptimizer):
         self.coef_entropy = coef_entropy
         self.coef_value = coef_value
 
-        # self.actor = nn.Sequential(
-        #     nn.Linear(self.environment.observation_space.shape[0], actor_hidden),
-        #     nn.ReLU(),
-        #     nn.Linear(actor_hidden, self.environment.action_space.n),
-        #     nn.Softmax(dim=1),
-        # )
-
-        # # Critic takes a state and returns its values
-        # self.critic = nn.Sequential(
-        #     nn.Linear(self.environment.observation_space.shape[0], critic_hidden),
-        #     nn.ReLU(),
-        #     nn.Linear(critic_hidden, 1),
-        # )
-
-        # self.critic_optimizer = Adam(self.critic.parameters(), lr=self.learning_rate)
-
-        # self.Rollout = namedtuple(
-        #     "Rollout",
-        #     [
-        #         "states",
-        #         "actions",
-        #         "rewards",
-        #         "next_states",
-        #     ],
-        # )
-
     def clipped_ratio(self, ratio):
         """Clipped ratio to avoid too big policy updates"""
         return torch.clamp(ratio, 1 - self.clipping, 1 + self.clipping)
