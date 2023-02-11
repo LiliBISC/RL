@@ -15,7 +15,7 @@ import ipdb
 class PPO:
     def __init__(
         self,
-        environment,
+        environment: Environment,
         learning_rate: float,
         horizon: int,
         actor_hidden: int,
@@ -164,7 +164,9 @@ class PPO:
 
                 samples = []
 
+                i = 0
                 while not done:
+                    i+=1
                     with torch.no_grad():
                         action = self.get_action(state)
 
@@ -174,6 +176,9 @@ class PPO:
                     samples.append((state, action, reward, next_state))
 
                     state = next_state
+
+                    if i >= self.environment.max_duration:
+                        done=True
 
                 # Transpose our samples
                 states, actions, rewards, next_states = zip(*samples)

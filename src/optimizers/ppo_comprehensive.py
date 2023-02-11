@@ -37,7 +37,7 @@ class A2C_PPO_NN(nn.Module):
 class PPO:
     def __init__(
         self,
-        environment,
+        environment:Environment,
         learning_rate: float,
         horizon: int,
         clipping: float = 0.2,
@@ -54,10 +54,13 @@ class PPO:
         self.coef_entropy = coef_entropy
         self.coef_value = coef_value
 
-        self.model = A2C_PPO_NN(
-            self.environment.observation_space.shape[0],
-            self.environment.action_space.n
-        )
+        try:
+            self.model = A2C_PPO_NN(
+                self.environment.n_observations,
+                self.environment.n_actions
+            )
+        except:
+            ipdb.set_trace()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
 
         self.Rollout = namedtuple(
@@ -166,7 +169,9 @@ class PPO:
 
                 samples = []
 
+                i=0
                 while not done:
+                    i += 1
                     with torch.no_grad():
                         action = self.get_action(state)
 
@@ -176,6 +181,9 @@ class PPO:
                     samples.append((state, action, reward, next_state))
 
                     state = next_state
+
+                    if i >= self.environment.max_duration:
+                        done = True
 
                 # Transpose our samples
                 states, actions, rewards, next_states = zip(*samples)
