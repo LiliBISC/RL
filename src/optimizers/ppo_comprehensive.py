@@ -173,9 +173,13 @@ class PPO:
                 while not done:
                     i += 1
                     with torch.no_grad():
-                        action = self.get_action(state)
-
-                    next_state, reward, done, _,_ = self.environment.step(action)
+                        action = self.get_action(state)                    
+                    try:
+                        next_state, reward, done, _,_ = self.environment.step(action)
+                    except:
+                        actions = np.zeros(self.environment.n_actions)
+                        actions[action] = 1
+                        next_state, reward, done, _,_ = self.environment.step(actions)
 
                     # Collect samples
                     samples.append((state, action, reward, next_state))
