@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import sys
-from src.policies.src.policies.abstract_policy import AbstractPolicy
-from src.env.src.env.environment import Environment
+from src.policies.abstract_policy import AbstractPolicy
+from src.env.environment import Environment
 
 
 class AbstractOptimizer(ABC):
