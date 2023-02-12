@@ -1,49 +1,24 @@
-import sys
-
-sys.path.append("C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env")
-
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 from torch.optim import Adam
 from src.env.environment import Environment
-from src.policies.abstract_policy import AbstractPolicy
 from collections import namedtuple
-import ipdb
 
 
-class A2C_PPO_NN(nn.Module):
-    def __init__(
-            self, 
-            input_space:int,
-            actor_space:int,
-            ) -> None:
-        super(A2C_PPO_NN, self).__init__()
-        self.linear1 = nn.Linear(input_space, 64)
-        self.linear2 = nn.Linear(64, 64)
-        self.actor = nn.Linear(64, actor_space)
-        self.critic = nn.Linear(64,1)
-        self.relu = nn.ReLU()
-        self.softmax = nn.Softmax(dim=-1)
-    
-    def forward(self,x):
-        x = self.relu(self.linear1(x))
-        x = self.relu(self.linear2(x))
-        action_probas = self.softmax(self.actor(x))
-        state_values = self.critic(x)
-        return action_probas, state_values
-        
 class PPO:
     def __init__(
-        self,
-        environment:Environment,
-        learning_rate: float,
-        horizon: int,
-        clipping: float = 0.2,
-        max_d_kl: float = 0.01,
-        coef_entropy: float = 0,
-        coef_value:float =0,
+            self,
+            environment: Environment,
+            learning_rate: float,
+            horizon: int,
+            actor_hidden: int,
+            critic_hidden: int,
+            clipping: float = 0.2,
+            max_d_kl: float = 0.01,
+            coef_entropy: float = 0,
+            coef_value: float = 0,
     ):
 
         self.environment = environment
@@ -54,14 +29,22 @@ class PPO:
         self.coef_entropy = coef_entropy
         self.coef_value = coef_value
 
-        try:
-            self.model = A2C_PPO_NN(
-                self.environment.n_observations,
-                self.environment.n_actions
-            )
-        except:
-            ipdb.set_trace()
-        self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
+        self.actor = nn.Sequential(
+            nn.Linear(self.environment.observation_space_shape()[0], actor_hidden),
+            nn.ReLU(),
+            nn.Linear(actor_hidden, self.environment.n_actions),
+            nn.Softmax(dim=1),
+        )
+
+        # Critic takes a state and returns its values
+        self.critic = nn.Sequential(
+            nn.Linear(self.environment.observation_space_shape()[0], critic_hidden),
+            nn.ReLU(),
+            nn.Linear(critic_hidden, 1),
+        )
+
+        self.critic_optimizer = Adam(self.critic.parameters(), lr=self.learning_rate)
+        self.actor_optimizer = Adam(self.actor.parameters(), lr=self.learning_rate)
 
         self.Rollout = namedtuple(
             "Rollout",
@@ -77,29 +60,31 @@ class PPO:
         state = (
             torch.tensor(state).float().unsqueeze(0)
         )  # Turn state into a batch with a single element
-        output_actor, _ = self.model(state)
         dist = Categorical(
-            output_actor
+            self.actor(state)
         )  # Create a distribution from probabilities for actions
         return dist.sample().item()
 
+    def update_critic(self, advantages):
+        loss = 0.5 * (advantages ** 2).mean()  # MSE
+        self.critic_optimizer.zero_grad()
+        loss.backward()
+        self.critic_optimizer.step()
 
     def estimate_advantages(self, states, last_state, rewards):
-        _, values = self.model(states)
-        _, last_value = self.model(last_state)
+        values = self.critic(states)
+        last_value = self.critic(last_state.unsqueeze(0))
         next_values = torch.zeros_like(rewards)
         for i in reversed(range(rewards.shape[0])):
             last_value = next_values[i] = rewards[i] + 0.99 * last_value
         advantages = next_values - values
-        # ipdb.set_trace()
         return advantages
 
     def clipped_ratio(self, ratio):
         """Clipped ratio to avoid too big policy updates"""
         return torch.clamp(ratio, 1 - self.clipping, 1 + self.clipping)
-        
 
-    def compute_loss(self, advantage, ratio, values, rewards, entropy):
+    def compute_loss_actor(self, advantage, ratio, values, rewards, entropy=0):
         loss_clip = torch.min(
             advantage * ratio,
             advantage * self.clipped_ratio(ratio),
@@ -112,31 +97,29 @@ class PPO:
         loss_value = 0.5 * ((values - rewards) ** 2).mean()
         # Total loss
         return -(
-            loss_clip - self.coef_value * loss_value + self.coef_entropy * loss_entropy
+                loss_clip - self.coef_value * loss_value + self.coef_entropy * loss_entropy
         )
 
-    def update_network(self, ratio, advantages, values, rewards, entropy):
-        loss = self.compute_loss(advantages, ratio,values, rewards, entropy)  # MSE
-        self.optimizer.zero_grad()
-        loss.backward(retain_graph=True)
-        self.optimizer.step()
+    def update_actor(self, ratio, advantages, values, rewards, entropy):
+        actor_loss = self.compute_loss_actor(advantages, ratio, values, rewards, entropy)  # MSE
+        self.actor_optimizer.zero_grad()
+        actor_loss.backward(retain_graph=True)
+        self.actor_optimizer.step()
 
-    def update_agent(self, rollouts):
+    def update_agent(self, rollouts, rewards):
         states = torch.cat([r.states for r in rollouts], dim=0)
         actions = torch.cat([r.actions for r in rollouts], dim=0).flatten()
-        actor_distribution, state_values = self.model(states)
+
         advantages = [
             self.estimate_advantages(states, next_states[-1], rewards)
             for states, _, rewards, next_states in rollouts
         ]
-        # ipdb.set_trace()
         advantages = torch.cat(advantages, dim=0).flatten()
-        rewards = [rewards for _, _, rewards, _ in rollouts]
-        rewards = torch.cat(rewards, dim=0).flatten()
+
         # Normalize advantages to reduce skewness and improve convergence
         advantages = (advantages - advantages.mean()) / advantages.std()
 
-        distribution = actor_distribution
+        distribution = self.actor(states)
         distribution = torch.distributions.utils.clamp_probs(distribution)
         probabilities = distribution[range(distribution.shape[0]), actions]
 
@@ -147,13 +130,10 @@ class PPO:
         # L = self.surrogate_loss(probabilities, probabilities.detach(), advantages)
         # KL = self.kl_div(distribution, distribution)
         probabilities_old = probabilities.detach()
-        ratio = probabilities/probabilities_old
-        action_log_probs = actor_distribution.log() 
-        entropy = (actor_distribution * action_log_probs).sum(1).mean()
-        # try:
-        self.update_network(ratio, advantages, state_values, rewards,entropy)
-        # except:
-        #     ipdb.set_trace()
+        ratio = probabilities / probabilities_old
+        values = entropy = torch.zeros(ratio.shape[0])
+        self.update_actor(ratio, advantages, values, rewards, entropy)
+        self.update_critic(advantages)
 
     def train(self, num_rollouts=10):
         mean_total_rewards = []
@@ -169,17 +149,13 @@ class PPO:
 
                 samples = []
 
-                i=0
+                i = 0
                 while not done:
                     i += 1
                     with torch.no_grad():
-                        action = self.get_action(state)                    
-                    try:
-                        next_state, reward, done, _,_ = self.environment.step(action)
-                    except:
-                        actions = np.zeros(self.environment.n_actions)
-                        actions[action] = 1
-                        next_state, reward, done, _,_ = self.environment.step(actions)
+                        action = self.get_action(state)
+
+                    next_state, reward, done, _, _ = self.environment.step(action)
 
                     # Collect samples
                     samples.append((state, action, reward, next_state))
@@ -206,7 +182,7 @@ class PPO:
                 rollout_total_rewards.append(rewards.sum().item())
                 global_rollout += 1
 
-            self.update_agent(rollouts)
+            self.update_agent(rollouts, torch.Tensor(rewards))
             mtr = np.mean(rollout_total_rewards)
             print(
                 f"E: {epoch}.\tMean total reward across {num_rollouts} rollouts: {mtr}"
