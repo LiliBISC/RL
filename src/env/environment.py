@@ -28,7 +28,10 @@ class Environment(object):
 
         self.env = gym.make(env_id, max_episode_steps=max_duration, autoreset=False)
         self.n_observations = self.env.observation_space.shape[0]
-        self.n_actions = self.env.action_space.n
+        try:
+            self.n_actions = self.env.action_space.n
+        except:
+            self.n_actions = self.env.action_space.shape[0]
 
         if seed is not None:
             self.seed_everything()

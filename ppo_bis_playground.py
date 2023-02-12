@@ -60,9 +60,10 @@ def values_graph(coef_values, duration=300):
 
     df = pd.DataFrame(columns=coef_values, data=scores)
 
-    viz.score_visualisation(df, f"PPO Scores on {environment.id}", show_variance=True)
+    viz.score_visualisation(df, title = f"PPO Scores on {environment.id}", show_variance=True)
 
     plt.show()
+    ipdb.set_trace()
 
 if __name__=="__main__":
     environment = Environment(Environment.CART_POL_V1, seed=0, max_duration=1000)
@@ -87,14 +88,15 @@ if __name__=="__main__":
     # )
     # ppo_comphrensive_usual_clipping = PPO_comprehensive(
     #     environment = environment, 
-    #     clipping=0.2,
-    #     learning_rate=0.003, 
-    #     horizon=200,
+    #     clipping=0.1,
+    #     learning_rate=0.0003, 
+    #     horizon=400,
     #     coef_entropy=0.1,
-    #     coef_value=0.1,
+    #     coef_value=0.3,
     # )
-    # # ppo_scores= ppo_a2C.train_test()
+    # # # ppo_scores= ppo_a2C.train_test()
     # ppo_scores = ppo_comphrensive_usual_clipping.train(num_rollouts=2)
     # # ppo_scores = ppo.train()
     # viz.score_visualisation(np.array(ppo_scores))
     # plt.show()
+    # ipdb.set_trace()
