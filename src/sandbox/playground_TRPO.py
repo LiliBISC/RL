@@ -42,5 +42,26 @@ def kl_graph(kl_list, duration=400):
 
     plt.show()
 
+def env_trpo(seed_lst, duration):
+    scores = np.zeros((duration, len(seed_lst)))
 
-kl_graph([1e-4, 3e-3, 2e-2])
+    for i, seed in enumerate(seed_lst):
+        environment = Environment(Environment.CART_POL_V1, seed=seed, max_duration=1000)
+        print(f"[*] PGO with environment {environment}")
+        trpo = TRPO(environment=environment,
+                    learning_rate=0.003,
+                    horizon=duration,
+                    actor_hidden=64,
+                    critic_hidden=64,
+                    max_d_kl=1e-2)
+
+        scores[:, i] = trpo.train(num_rollouts=2)
+
+    df = pd.DataFrame(columns=seed_lst, data=scores)
+
+    viz.score_visualisation(df, f"TRPO Scores on different environments")
+
+    plt.show()
+
+
+env_trpo([0,1,2,3,4], duration = 400)

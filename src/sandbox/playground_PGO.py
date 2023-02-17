@@ -45,4 +45,24 @@ def learning_rate_pgo(learning_rates, duration):
     plt.show()
 
 
-learning_rate_pgo([2e-4, 2e-3, 2e-2, 8e-2], duration=400)
+def env_pgo(env_lst, duration):
+    scores = np.zeros((duration, len(env_lst)))
+
+    for i, e in enumerate(env_lst):
+        environment = Environment(e, seed=0, max_duration=1000)
+        print(f"[*] PGO with environment {e}")
+        environment.reset()
+        policy = NeuralNetPolicy(environment=environment, hidden_layer_size=256, learning_rate=3e-3)
+        pgo = PGO(policy=policy, horizon=500, gamma=0.99)
+        pgo_scores = pgo.train(max_trajectory=duration, printEvery=50)
+
+        scores[:, i] = pgo_scores
+
+    df = pd.DataFrame(columns=env_lst, data=scores)
+
+    viz.score_visualisation(df, f"PGO Scores on different environments")
+
+    plt.show()
+
+
+env_pgo([Environment.CART_POL_V1, Environment.AIR_RAID_V5], duration = 400)

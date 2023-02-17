@@ -18,10 +18,6 @@ class Environment(object):
             max_duration: int = None,
     ):
 
-        if env_id not in gym.envs.registry.keys():
-            raise Exception(
-                f"{env_id} is not a registered environment in gym. \nAvailable environments: \n{list(gym.envs.registry.keys())}")
-
         self.id = env_id
         self.seed = seed
         self.max_duration = max_duration
