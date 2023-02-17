@@ -65,4 +65,4 @@ def env_pgo(env_lst, duration):
     plt.show()
 
 
-env_pgo([Environment.CART_POL_V1, Environment.AIR_RAID_V5], duration = 400)
+env_pgo([Environment.CART_POL_V1], duration=400)

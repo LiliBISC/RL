@@ -3,14 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from src.optimizers.actor_critic import A2C
 from src.optimizers.trpo import TRPO
-from src.optimizers.ppo_comprehensive import PPO
+from src.optimizers.ppo import PPO
 from src.optimizers.pgo import PGO
 from src.env.environment import Environment
 from src.policies.neural_policy import NeuralNetPolicy
 from src.viz.visualization import score_visualisation
 
 import os
-os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 def env_trpo(seed_lst, duration):
@@ -43,14 +44,16 @@ def env_trpo(seed_lst, duration):
         a2c_scores = a2c.train()
         ppo_scores = ppo.train(num_rollouts=2)
 
-        scores = np.concatenate((pgo_scores.reshape(-1,1), a2c_scores.reshape(-1,1)), axis=1)
-        scores = np.concatenate((scores, np.array(trpo_scores).reshape(-1,1)), axis=1)
-        scores = np.concatenate((scores, np.array(ppo_scores).reshape(-1,1)), axis=1)
+        scores = np.concatenate((pgo_scores.reshape(-1, 1), a2c_scores.reshape(-1, 1)), axis=1)
+        scores = np.concatenate((scores, np.array(trpo_scores).reshape(-1, 1)), axis=1)
+        scores = np.concatenate((scores, np.array(ppo_scores).reshape(-1, 1)), axis=1)
 
         df = pd.DataFrame(columns=['PGO', 'A2C', 'TRPO', 'PPO'], data=scores)
 
         plt.subplot(421 + i)
-        score_visualisation(df, f"All scores on environment {Environment.CART_POL_V1} and seed {seed}", figure=False, show_variance=False)
+        score_visualisation(df, f"All scores on environment {Environment.CART_POL_V1} and seed {seed}", figure=False,
+                            show_variance=False)
     plt.show()
 
-env_trpo([0, 12, 22, 13, 2, 9, 50, 40], duration = 250)
+
+env_trpo([12, 22, 13, 2, 9, 50, 40], duration=250)

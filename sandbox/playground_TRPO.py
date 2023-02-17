@@ -59,9 +59,9 @@ def env_trpo(seed_lst, duration):
 
     df = pd.DataFrame(columns=seed_lst, data=scores)
 
-    viz.score_visualisation(df, f"TRPO Scores on different environments")
+    viz.score_visualisation(df, f"TRPO Scores on different starts of CartPole-v1")
 
     plt.show()
 
 
-env_trpo([0,1,2,3,4], duration = 400)
+env_trpo([0, 1, 2], duration=400)

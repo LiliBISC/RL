@@ -1,9 +1,11 @@
+import matplotlib.pyplot as plt
+
 from src.env.environment import Environment
 from src.policies.neural_policy import NeuralNetPolicy
 from src.optimizers.trpo import TRPO
 from src.optimizers.actor_critic import A2C
 from src.optimizers.pgo import PGO
-from src.optimizers.ppo import PPO as PPO_comprehensive
+from src.optimizers.ppo import PPO
 
 import src.viz.visualization as viz
 import numpy as np
@@ -26,7 +28,7 @@ if __name__ == "__main__":
         critic_hidden=64,
         max_d_kl=0.01,
     )
-    ppo = PPO_comprehensive(
+    ppo = PPO(
         environment=environment,
         learning_rate=learning_rate,
         horizon=horizon,
@@ -45,3 +47,4 @@ if __name__ == "__main__":
 
     df_scores = pd.DataFrame(scores, columns=[f"{element.upper()}_score" for element in labels])
     viz.score_visualisation(df_scores, show_variance=False)
+    plt.show()

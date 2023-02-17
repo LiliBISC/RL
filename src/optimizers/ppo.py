@@ -7,13 +7,17 @@ from src.env.environment import Environment
 from collections import namedtuple
 
 
-class A2C_PPO_NN(nn.Module):
+class _A2C_PPO_NN(nn.Module):
+    """
+    Internal class to implement the A2C architecture into the PPO
+    """
+
     def __init__(
             self,
             input_space: int,
             actor_space: int,
     ) -> None:
-        super(A2C_PPO_NN, self).__init__()
+        super(_A2C_PPO_NN, self).__init__()
         self.linear1 = nn.Linear(input_space, 64)
         self.linear2 = nn.Linear(64, 64)
         self.actor = nn.Linear(64, actor_space)
@@ -30,6 +34,25 @@ class A2C_PPO_NN(nn.Module):
 
 
 class PPO:
+    """
+    Implementation in Actor-Critic + Entropy style of the PPO algorithm
+
+    Parameter
+    ---------
+    environment
+        Environment in which to train
+    learning_rate
+        Learning rate of the optimizer of the agent
+    horizon
+        Number of episodes to be played
+    clipping
+        Clipping parameter of the ratio
+    coef_entropy
+        Importance coefficient of the entropy
+    coef_value
+        Importance coefficient of the critic
+    """
+
     def __init__(
             self,
             environment: Environment,
@@ -49,7 +72,7 @@ class PPO:
         self.coef_entropy = coef_entropy
         self.coef_value = coef_value
 
-        self.model = A2C_PPO_NN(
+        self.model = _A2C_PPO_NN(
             self.environment.n_observations,
             self.environment.n_actions
         )
@@ -119,7 +142,6 @@ class PPO:
             self.estimate_advantages(states, next_states[-1], rewards)
             for states, _, rewards, next_states in rollouts
         ]
-        # ipdb.set_trace()
         advantages = torch.cat(advantages, dim=0).flatten()
         rewards = [rewards for _, _, rewards, _ in rollouts]
         rewards = torch.cat(rewards, dim=0).flatten()
@@ -134,16 +156,11 @@ class PPO:
 
         # We will calculate the gradient wrt to the new probabilities (surrogate function),
         # so second probabilities should be treated as a constant
-        # L = self.surrogate_loss(probabilities, probabilities.detach(), advantages)
-        # KL = self.kl_div(distribution, distribution)
         probabilities_old = probabilities.detach()
         ratio = probabilities / probabilities_old
         action_log_probs = actor_distribution.log()
         entropy = (actor_distribution * action_log_probs).sum(1).mean()
-        # try:
         self.update_network(ratio, advantages, state_values, rewards, entropy)
-        # except:
-        #     ipdb.set_trace()
 
     def train(self, num_rollouts=10):
         mean_total_rewards = []

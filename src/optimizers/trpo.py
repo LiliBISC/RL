@@ -6,7 +6,27 @@ from torch.optim import Adam
 from src.env.environment import Environment
 from collections import namedtuple
 
+
 class TRPO():
+    """
+    Implementation of the TRPO in an A2C fashion
+
+    Parameter
+    ---------
+    environment
+        Environment in which to train
+    learning_rate
+        Learning rate of the optimizer of the agent
+    horizon
+        Number of episodes to be played
+    actor_hidden
+        Size of the hidden network of the actor
+    critic_hidden
+        Size of the hidden network of the critic
+    max_d_kl
+        KL distance parameter to respect between the old and current policy
+    """
+
     def __init__(self,
                  environment: Environment,
                  learning_rate: float,
@@ -34,11 +54,13 @@ class TRPO():
         self.Rollout = namedtuple('Rollout', ['states', 'actions', 'rewards', 'next_states', ])
 
     def get_action(self, state):
-        try: 
-            state = torch.tensor(state).float().unsqueeze(0)  # Turn state into a batch with a single element
+        try:
+            # Turn state into a batch with a single element
+            state = torch.tensor(state).float().unsqueeze(0)
         except:
             state = torch.tensor(state[0]).float().unsqueeze(0)
-        dist = Categorical(self.actor(state))  # Create a distribution from probabilities for actions
+        # Create a distribution from probabilities for actions
+        dist = Categorical(self.actor(state))
         return dist.sample().item()
 
     def update_critic(self, advantages):
@@ -211,7 +233,5 @@ class TRPO():
             self.update_agent(rollouts)
             mtr = np.mean(rollout_total_rewards)
             print(f'E: {epoch}.\tMean total reward across {num_rollouts} rollouts: {mtr}')
-            if mtr > 3000:
-                ipdb.set_trace()
             mean_total_rewards.append(mtr)
         return mean_total_rewards
