@@ -9,7 +9,6 @@ import torch.nn.functional as F
 from src.env.environment import Environment
 from src.policies.abstract_policy import AbstractPolicy
 from collections import namedtuple
-import ipdb
 
 
 class PPO_A2C(nn.Module):

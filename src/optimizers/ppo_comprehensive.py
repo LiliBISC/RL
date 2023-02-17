@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append("C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/env")
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -10,7 +6,6 @@ from torch.optim import Adam
 from src.env.environment import Environment
 from src.policies.abstract_policy import AbstractPolicy
 from collections import namedtuple
-import ipdb
 
 
 class A2C_PPO_NN(nn.Module):

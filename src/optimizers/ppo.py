@@ -2,13 +2,6 @@ import sys
 import os
 import gym
 import ipdb
-
-
-path_to_folder = os.path.join("Users","32mor","OneDrive", "Documents", "IPP M2", "RL","RL")
-# sys.path.append(os.path.join(path_to_folder, "src","optimizers"))
-# sys.path.append(os.path.join(path_to_folder, "src","policies"))
-# sys.path.append(os.path.join(path_to_folder,'src',"viz"))
-# sys.path.append("C:/Users/lilia/OneDrive/Documents/GitHub/RL/src/policies")
 import torch
 import torch.nn as nn
 from torch.optim import Adam

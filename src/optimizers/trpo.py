@@ -5,8 +5,6 @@ from torch.distributions import Categorical
 from torch.optim import Adam
 from src.env.environment import Environment
 from collections import namedtuple
-import ipdb 
-
 
 class TRPO():
     def __init__(self,
